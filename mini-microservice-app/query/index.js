@@ -9,6 +9,22 @@ app.use(cors());
 
 const posts = {};
 
+const eventBusUrl = process.env.EVENT_BUS_URL || 'http://event-bus-svc:4005';
+
+const fetchEvents = async (retries = 10, delay = 2000) => {
+  try {
+    return await axios.get(`${eventBusUrl}/events`);
+  } catch (err) {
+    if (retries <= 0) {
+      throw err;
+    }
+
+    console.log(`Event bus unavailable at ${eventBusUrl}, retrying in ${delay}ms...`);
+    await new Promise((resolve) => setTimeout(resolve, delay));
+    return fetchEvents(retries - 1, delay);
+  }
+};
+
 const handleEvent = (type, data) => {
   if (type === 'PostCreated') {
     const { id, title } = data;
@@ -52,7 +68,7 @@ app.post('/events', (req, res) => {
 app.listen(4002, async () => {
   console.log('Listening on 4002');
 
-  const res = await axios.get('http://localhost:4005/events');
+  const res = await fetchEvents();
 
   for (let event of res.data) {
     console.log('Processing event:', event.type);

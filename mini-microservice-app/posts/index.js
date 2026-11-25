@@ -10,11 +10,13 @@ app.use(cors());
 
 const posts = {};
 
+const eventBusUrl = process.env.EVENT_BUS_URL || 'http://event-bus-svc:4005';
+
 app.get('/posts', (req, res) => {
   return res.send(posts);
 });
 
-app.post('/posts', async (req, res) => {
+app.post('/posts/create', async (req, res) => {
   const id = randomBytes(4).toString('hex');
   const { title } = req.body;
 
@@ -23,7 +25,7 @@ app.post('/posts', async (req, res) => {
     title,
   };
 
-  await axios.post('http://localhost:4005/events', {
+  await axios.post(`${eventBusUrl}/events`, {
     type: 'PostCreated',
     data: {
       id,
@@ -35,11 +37,12 @@ app.post('/posts', async (req, res) => {
 });
 
 app.post('/events', (req, res) => {
-  console.log('Event Received', req.body.type);
+  console.log('Event Received Latest', req.body.type);
 
   return res.send({});
 });
 
 app.listen(4000, () => {
+  console.log("V10000");
   console.log('Listening on 4000');
 });

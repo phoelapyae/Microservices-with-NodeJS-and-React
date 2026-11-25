@@ -10,6 +10,8 @@ app.use(cors());
 
 const commentsByPostId = {};
 
+const eventBusUrl = process.env.EVENT_BUS_URL || 'http://event-bus-svc:4005';
+
 app.get('/posts/:id/comments', (req, res) => {
   return res.send(commentsByPostId[req.params.id] || []);
 });
@@ -28,7 +30,7 @@ app.post('/posts/:id/comments', async (req, res) => {
 
   commentsByPostId[req.params.id] = comments;
 
-  await axios.post('http://localhost:4005/events', {
+  await axios.post(`${eventBusUrl}/events`, {
     type: 'CommentCreated',
     data: {
       id: commentId,
@@ -56,7 +58,7 @@ app.post('/events', async (req, res) => {
 
     comment.status = status;
 
-    await axios.post('http://localhost:4005/events', {
+    await axios.post(`${eventBusUrl}/events`, {
       type: 'CommentUpdated',
       data: {
         id,
